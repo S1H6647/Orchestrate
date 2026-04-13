@@ -57,6 +57,12 @@ public class User {
     @Column(nullable = false)
     private boolean emailVerified = false;  // tracks whether email address has been verified
 
+    // ── Email Verification ────────────────────────────────
+    @Column(length = 64)
+    private String verificationToken;      // UUID token, null after verified
+
+    private LocalDateTime verificationTokenExpiresAt;
+
     // ── Refresh Token ─────────────────────────────────────
     @Column(length = 512)
     private String refreshToken;           // hashed, for token rotation

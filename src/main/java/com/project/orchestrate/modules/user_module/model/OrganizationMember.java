@@ -2,6 +2,7 @@ package com.project.orchestrate.modules.user_module.model;
 
 //import com.project.orchestrate.modules.project_module.model.Organization;
 
+import com.project.orchestrate.modules.project_module.model.Organization;
 import com.project.orchestrate.modules.user_module.model.enums.MemberStatus;
 import com.project.orchestrate.modules.user_module.model.enums.OrganizationRole;
 import jakarta.persistence.*;
@@ -27,9 +28,9 @@ public class OrganizationMember {
     private UUID id;                        // unique identifier for this membership
 
     // ── Relationships ─────────────────────────────────────
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "organization_id", nullable = false)
-//    private Organization organization;      // the organization this member belongs to (required)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;      // the organization this member belongs to (required)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
