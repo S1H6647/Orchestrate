@@ -1,21 +1,17 @@
 package com.project.orchestrate.modules.auth_module.controller;
 
-import com.project.orchestrate.modules.auth_module.dto.LoginRequest;
-import com.project.orchestrate.modules.auth_module.dto.LoginResponse;
-import com.project.orchestrate.modules.auth_module.dto.RegisterRequest;
-import com.project.orchestrate.modules.auth_module.dto.RegisterResponse;
+import com.project.orchestrate.modules.auth_module.dto.*;
 import com.project.orchestrate.modules.auth_module.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth/")
+@RequestMapping("/api/v1/auth/")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -29,5 +25,23 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<Map<String, String>> verifyAccount(@RequestParam("token") String token) {
+        authService.verifyAccount(token);
+        return ResponseEntity.ok(
+                Map.of("message", "Account verified successfully")
+        );
+    }
+
+    @GetMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerificationEmail(
+            @RequestParam("email") String email
+    ) {
+        authService.resendVerificationEmail(new ResendVerificationRequest(email));
+        return ResponseEntity.ok(
+                Map.of("message", "Verification email resent successfully")
+        );
     }
 }
