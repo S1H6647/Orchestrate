@@ -1,6 +1,7 @@
 package com.project.orchestrate.modules.project_module.service;
 
 import com.project.orchestrate.common.exception.ResourceNotFoundException;
+import com.project.orchestrate.common.service.StorageService;
 import com.project.orchestrate.modules.project_module.dto.CreateOrganizationRequest;
 import com.project.orchestrate.modules.project_module.dto.OrganizationResponse;
 import com.project.orchestrate.modules.project_module.mapper.OrganizationMapper;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,9 +28,10 @@ public class OrganizationService {
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final OrganizationMapper organizationMapper;
+    private final StorageService storageService;
 
     @Transactional
-    public OrganizationResponse createOrganization(@Valid CreateOrganizationRequest request, UUID userId) {
+    public OrganizationResponse createOrganization(@Valid CreateOrganizationRequest request, MultipartFile image, UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -37,11 +40,13 @@ public class OrganizationService {
             slug = toSlug(request.name());
         }
 
+        String logoUrl = storageService.upload(image);
+
         Organization organization = Organization.builder()
                 .name(request.name())
                 .slug(slug)
                 .description(request.description())
-                .logoUrl(request.logoUrl())
+                .logoUrl(logoUrl)
                 .websiteUrl(request.websiteUrl())
                 .createdBy(user)
                 .maxMembers(5)
