@@ -2,11 +2,11 @@ package com.project.orchestrate.modules.auth_module.dto;
 
 import java.util.UUID;
 
-public record LoginResponse(
-        String accessToken,
-        String refreshToken,
+public record MeResponse(
         UUID id,
         String name,
-        String email
+        String email,
+        String avatarUrl,
+        String phone
 ) {
 }

@@ -1,13 +1,11 @@
 package com.project.orchestrate.modules.auth_module.service;
 
-import com.project.orchestrate.common.exception.AccountNotVerifiedException;
-import com.project.orchestrate.common.exception.AccountSuspendedException;
-import com.project.orchestrate.common.exception.DuplicateResourceException;
-import com.project.orchestrate.common.exception.InvalidCredentialsException;
+import com.project.orchestrate.common.exception.*;
 import com.project.orchestrate.modules.auth_module.dto.*;
 import com.project.orchestrate.modules.auth_module.mapper.UserMapper;
 import com.project.orchestrate.modules.auth_module.messaging.AccountVerificationEvent;
 import com.project.orchestrate.modules.auth_module.messaging.AccountVerificationEventPublisher;
+import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
 import com.project.orchestrate.modules.user_module.model.enums.SystemRole;
@@ -98,6 +96,11 @@ public class AuthService {
         refreshTokenService.revokeToken(user);
     }
 
+    public void logout(String rawRefreshToken) {
+        User user = refreshTokenService.validateAndRotate(rawRefreshToken);
+        refreshTokenService.revokeToken(user);
+    }
+
     private String randomUUIDToken() {
         return UUID.randomUUID().toString();
     }
@@ -137,5 +140,12 @@ public class AuthService {
                 user.getVerificationToken(),
                 String.valueOf(user.isEmailVerified())
         ));
+    }
+
+    public MeResponse getMe(UserPrincipal userPrincipal) {
+        User user = userRepository.findByEmail(userPrincipal.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return userMapper.mapMeResponse(user);
     }
 }

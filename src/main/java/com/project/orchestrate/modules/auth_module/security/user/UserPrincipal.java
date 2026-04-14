@@ -1,4 +1,4 @@
-package com.project.orchestrate.modules.auth_module.security;
+package com.project.orchestrate.modules.auth_module.security.user;
 
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
