@@ -1,11 +1,13 @@
 package com.project.orchestrate.modules.auth_module.controller;
 
 import com.project.orchestrate.modules.auth_module.dto.*;
+import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
 import com.project.orchestrate.modules.auth_module.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -43,5 +45,29 @@ public class AuthController {
         return ResponseEntity.ok(
                 Map.of("message", "Verification email resent successfully")
         );
+    }
+
+    @GetMapping("/refresh-token")
+    public ResponseEntity<LoginResponse> refreshToken(
+            @RequestParam("refreshToken") String refreshToken
+    ) {
+        return ResponseEntity.ok(authService.refreshToken(refreshToken));
+    }
+
+    @GetMapping
+    public ResponseEntity<Map<String, String>> logout(
+            @RequestParam("refreshToken") String refreshToken
+    ) {
+        authService.logout(refreshToken);
+        return ResponseEntity.ok(
+                Map.of("message", "Logged out successfully")
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MeResponse> getMe(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(authService.getMe(userPrincipal));
     }
 }
