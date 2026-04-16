@@ -48,3 +48,15 @@ cloudinary:
   api:
     key: ${CLOUDINARY_API_KEY}
     secret: ${CLOUDINARY_API_SECRET}
+
+organization:
+  plan-limits:
+    FREE:
+      max-members: 5
+      max-projects: 3
+    PRO:
+      max-members: 25
+      max-projects: 20
+    ENTERPRISE:
+      max-members: 200
+      max-projects: 500
