@@ -1,8 +1,8 @@
-package com.project.orchestrate.modules.project_module.dto;
+package com.project.orchestrate.modules.organization_module.dto;
 
-import com.project.orchestrate.modules.project_module.model.enums.Plan;
+import com.project.orchestrate.modules.organization_module.model.enums.OrganizationStatus;
+import com.project.orchestrate.modules.organization_module.model.enums.Plan;
 import com.project.orchestrate.modules.user_module.dto.UserSummary;
-import com.project.orchestrate.modules.user_module.model.enums.OrganizationStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

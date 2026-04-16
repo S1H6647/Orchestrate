@@ -1,4 +1,4 @@
-package com.project.orchestrate.modules.project_module.dto;
+package com.project.orchestrate.modules.organization_module.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
