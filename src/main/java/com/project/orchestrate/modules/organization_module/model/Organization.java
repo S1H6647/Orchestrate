@@ -1,7 +1,6 @@
 package com.project.orchestrate.modules.project_module.model;
 
 import com.project.orchestrate.modules.project_module.model.enums.Plan;
-import com.project.orchestrate.modules.user_module.model.OrganizationMember;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.OrganizationStatus;
 import jakarta.persistence.*;

@@ -2,6 +2,7 @@ package com.project.orchestrate.modules.project_module.controller;
 
 import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
 import com.project.orchestrate.modules.project_module.dto.CreateOrganizationRequest;
+import com.project.orchestrate.modules.project_module.dto.OrganizationMemberResponse;
 import com.project.orchestrate.modules.project_module.dto.OrganizationResponse;
 import com.project.orchestrate.modules.project_module.service.OrganizationService;
 import jakarta.validation.Valid;
@@ -46,6 +47,11 @@ public class OrganizationController {
         log.info("Creating organization with name: {} by user: {}", request.name(), userPrincipal.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(organizationService.createOrganization(request, image, userPrincipal.getId()));
+    }
+
+    @GetMapping("/{organizationId}/members")
+    public ResponseEntity<List<OrganizationMemberResponse>> getOrganizationMembers(@PathVariable UUID organizationId) {
+        return ResponseEntity.ok(organizationService.getOrganizationMembers(organizationId));
     }
 
 }

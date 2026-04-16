@@ -3,12 +3,18 @@ package com.project.orchestrate.modules.project_module.service;
 import com.project.orchestrate.common.exception.ResourceNotFoundException;
 import com.project.orchestrate.common.service.StorageService;
 import com.project.orchestrate.modules.project_module.dto.CreateOrganizationRequest;
+import com.project.orchestrate.modules.project_module.dto.OrganizationMemberResponse;
 import com.project.orchestrate.modules.project_module.dto.OrganizationResponse;
 import com.project.orchestrate.modules.project_module.mapper.OrganizationMapper;
+import com.project.orchestrate.modules.project_module.mapper.SummaryMapper;
 import com.project.orchestrate.modules.project_module.model.Organization;
+import com.project.orchestrate.modules.project_module.model.OrganizationMember;
 import com.project.orchestrate.modules.project_module.model.enums.Plan;
+import com.project.orchestrate.modules.project_module.repository.OrganizationMemberRepository;
 import com.project.orchestrate.modules.project_module.repository.OrganizationRepository;
 import com.project.orchestrate.modules.user_module.model.User;
+import com.project.orchestrate.modules.user_module.model.enums.MemberStatus;
+import com.project.orchestrate.modules.user_module.model.enums.OrganizationRole;
 import com.project.orchestrate.modules.user_module.model.enums.OrganizationStatus;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -29,6 +35,8 @@ public class OrganizationService {
     private final UserRepository userRepository;
     private final OrganizationMapper organizationMapper;
     private final StorageService storageService;
+    private final SummaryMapper summaryMapper;
+    private final OrganizationMemberRepository organizationMemberRepository;
 
     @Transactional
     public OrganizationResponse createOrganization(@Valid CreateOrganizationRequest request, MultipartFile image, UUID userId) {
@@ -57,7 +65,16 @@ public class OrganizationService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
+        OrganizationMember member = OrganizationMember.builder()
+                .user(user)
+                .organization(organization)
+                .role(OrganizationRole.OWNER)
+                .status(MemberStatus.ACTIVE)
+                .joinedAt(LocalDateTime.now())
+                .build();
+
         var saved = organizationRepository.save(organization);
+        organizationMemberRepository.save(member);
         return organizationMapper.mapToOrganizationResponse(saved);
     }
 
@@ -89,5 +106,15 @@ public class OrganizationService {
                 .replaceAll("[^a-z0-9\\s-]", "")   // remove special chars
                 .replaceAll("\\s+", "-")           // spaces → dash
                 .replaceAll("-{2,}", "-");         // collapse multiple dashes
+    }
+
+    public List<OrganizationMemberResponse> getOrganizationMembers(UUID organizationId) {
+        Organization organization = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        return organizationRepository.findByOrganizationMembers()
+                .stream()
+                .map(organizationMapper::mapToOrganizationMemberResponse)
+                .toList();
     }
 }
