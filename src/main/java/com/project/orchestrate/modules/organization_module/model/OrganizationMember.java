@@ -1,8 +1,8 @@
-package com.project.orchestrate.modules.project_module.model;
+package com.project.orchestrate.modules.organization_module.model;
 
+import com.project.orchestrate.modules.organization_module.model.enums.OrganizationRole;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.MemberStatus;
-import com.project.orchestrate.modules.user_module.model.enums.OrganizationRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

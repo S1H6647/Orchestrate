@@ -1,4 +1,4 @@
-package com.project.orchestrate.modules.project_module.model.enums;
+package com.project.orchestrate.modules.organization_module.model.enums;
 
 public enum Plan {
     FREE,
