@@ -1,10 +1,10 @@
-package com.project.orchestrate.modules.project_module.controller;
+package com.project.orchestrate.modules.organization_module.controller;
 
 import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
-import com.project.orchestrate.modules.project_module.dto.CreateOrganizationRequest;
-import com.project.orchestrate.modules.project_module.dto.OrganizationMemberResponse;
-import com.project.orchestrate.modules.project_module.dto.OrganizationResponse;
-import com.project.orchestrate.modules.project_module.service.OrganizationService;
+import com.project.orchestrate.modules.organization_module.dto.CreateOrganizationRequest;
+import com.project.orchestrate.modules.organization_module.dto.OrganizationMemberResponse;
+import com.project.orchestrate.modules.organization_module.dto.OrganizationResponse;
+import com.project.orchestrate.modules.organization_module.service.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/organizations")
+@RequestMapping("/api/v1/organizations")
 @RequiredArgsConstructor
 public class OrganizationController {
 
@@ -53,5 +53,12 @@ public class OrganizationController {
     public ResponseEntity<List<OrganizationMemberResponse>> getOrganizationMembers(@PathVariable UUID organizationId) {
         return ResponseEntity.ok(organizationService.getOrganizationMembers(organizationId));
     }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteOrganization(@RequestParam UUID organizationId) {
+        organizationService.deleteOrganization(organizationId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }
