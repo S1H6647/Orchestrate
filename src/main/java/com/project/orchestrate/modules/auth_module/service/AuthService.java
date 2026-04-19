@@ -16,7 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+
+import static com.project.orchestrate.common.service.HelperMethodService.randomUUIDToken;
 
 @Service
 @RequiredArgsConstructor
@@ -92,17 +93,9 @@ public class AuthService {
         return userMapper.mapLoginResponse(user, accessToken, newRefreshToken);
     }
 
-    public void logout(User user) {
-        refreshTokenService.revokeToken(user);
-    }
-
     public void logout(String rawRefreshToken) {
         User user = refreshTokenService.validateAndRotate(rawRefreshToken);
         refreshTokenService.revokeToken(user);
-    }
-
-    private String randomUUIDToken() {
-        return UUID.randomUUID().toString();
     }
 
     public void verifyAccount(String token) {

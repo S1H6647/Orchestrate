@@ -25,10 +25,6 @@ public class JwtService {
 
     public String generateAccessToken(User user) {
 
-        String[] nameParts = user.getName() != null ? user.getName().split(" ", 2) : new String[]{"", ""};
-        String firstName = nameParts[0];
-        String lastName = nameParts.length > 1 ? nameParts[1] : "";
-
         return Jwts.builder()
                 .claims()
                 .subject(user.getEmail())
