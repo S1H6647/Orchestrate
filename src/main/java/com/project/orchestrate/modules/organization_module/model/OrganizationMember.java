@@ -51,6 +51,6 @@ public class OrganizationMember {
 
     // ── Audit ─────────────────────────────────────────────
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private LocalDateTime joinedAt;         // when the user joined the organization
 }

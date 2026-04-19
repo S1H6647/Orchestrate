@@ -1,5 +1,6 @@
 package com.project.orchestrate.modules.user_module.model;
 
+import com.project.orchestrate.modules.organization_module.model.OrganizationMember;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
 import com.project.orchestrate.modules.user_module.model.enums.SystemRole;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "users")
 @Data
 @AllArgsConstructor
@@ -84,16 +87,4 @@ public class User {
     // ── Relationships ─────────────────────────────────────
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrganizationMember> memberships = new ArrayList<>();
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
