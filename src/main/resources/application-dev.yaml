@@ -33,6 +33,10 @@ spring:
 
 app:
   base-url: http://localhost:${PORT:8081}
+  mail:
+    from: ${MAIL_FROM:${MAIL_USERNAME}}
+  invitation:
+    expiry-hours: 48      # hours
 
 rabbit:
   exchange: orchestrate.exchange
@@ -40,7 +44,7 @@ rabbit:
   routing-key: orchestrate.routingkey
 
 jwt:
-  secret: ${JWT_SECRET:mysecretkey}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
 
 cloudinary:
