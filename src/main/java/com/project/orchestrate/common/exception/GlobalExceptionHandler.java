@@ -42,6 +42,20 @@ public class GlobalExceptionHandler {
                 .body(buildResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage()));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(buildResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PlanLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handlePlanLimitExceededException(PlanLimitExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(buildResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return ResponseEntity
@@ -86,11 +100,12 @@ public class GlobalExceptionHandler {
     }
 
     private Map<String, Object> buildResponse(HttpStatus status, String error, String message) {
-        return Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", status.value(),
-                "error", error,
-                "message", message
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("success", false);
+        response.put("status", status.value());
+        response.put("error", error);
+        response.put("message", message);
+        return response;
     }
 }

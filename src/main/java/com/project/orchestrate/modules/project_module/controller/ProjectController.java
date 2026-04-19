@@ -8,9 +8,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,7 +22,19 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    // GET /api/v1/organizations/{orgId}/projects
+    @GetMapping
+    @PreAuthorize("@securityService.hasOrgRole(#orgId, 'OWNER', 'ADMIN', 'MEMBER', 'VIEWER')")
+    public ResponseEntity<List<ProjectResponse>> getProjects(
+            @PathVariable UUID orgId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(projectService.getProjects(orgId, userPrincipal.getId()));
+    }
+
+    // POST /api/v1/organizations/{orgId}/projects
     @PostMapping
+    @PreAuthorize("@securityService.hasOrgRole(#orgId, 'OWNER', 'ADMIN')")
     public ResponseEntity<ProjectResponse> createProject(
             @PathVariable UUID orgId,
             @Valid @RequestBody CreateProjectRequest request,
