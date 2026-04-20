@@ -19,7 +19,15 @@ public class AccountVerificationEventPublisher {
     @Value("${rabbit.routing-key:orchestrate.routingkey}")
     private String routingKey;
 
+    @Value("${rabbit.enabled:false}")
+    private boolean rabbitEnabled;
+
     public void publishAccountVerificationEvent(AccountVerificationEvent event) {
+        if (!rabbitEnabled) {
+            log.info("RabbitMQ is disabled. Skipping account verification event publish for user: {}", event.name());
+            return;
+        }
+
         log.info("Publishing account verification event for user: {}", event.name());
 
         rabbitTemplate.convertAndSend(exchange, routingKey, event);

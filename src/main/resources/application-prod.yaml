@@ -1,6 +1,12 @@
 spring:
   server:
     port: ${PORT:8082}
+  rabbitmq:
+    uri: ${RABBITMQ_URI:}
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
+        missing-queues-fatal: false
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -28,17 +34,15 @@ spring:
           starttls:
             enable: true
 
-  RabbitMQ:
-    uri: ${RABBITMQ_URI:}
-
 app:
-  base-url: http://localhost:${PORT:8081}
+  base-url: ${APP_BASE_URL:http://localhost:${PORT:8081}}
   mail:
     from: ${MAIL_FROM:${MAIL_USERNAME}}
   invitation:
     expiry-hours: 48      # hours
 
 rabbit:
+  enabled: ${RABBIT_ENABLED:false}
   exchange: ${RABBIT_EXCHANGE:orchestrate.exchange}
   queue: ${RABBIT_QUEUE:orchestrate.queue}
   routing-key: ${RABBIT_ROUTING_KEY:orchestrate.routingkey}
