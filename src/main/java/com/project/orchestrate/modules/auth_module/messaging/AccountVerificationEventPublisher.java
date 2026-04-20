@@ -13,10 +13,10 @@ public class AccountVerificationEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @Value("${rabbit.exchange}")
+    @Value("${rabbit.exchange:orchestrate.exchange}")
     private String exchange;
 
-    @Value("${rabbit.routing-key}")
+    @Value("${rabbit.routing-key:orchestrate.routingkey}")
     private String routingKey;
 
     public void publishAccountVerificationEvent(AccountVerificationEvent event) {
