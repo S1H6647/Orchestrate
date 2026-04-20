@@ -11,8 +11,8 @@ public record InviteUserToOrganizationRequest(
 
         @NotBlank(message = "Role is required")
         @Pattern(
-                regexp = "OWNER|ADMIN|MEMBER",
-                message = "Role must be one of: OWNER, ADMIN, MEMBER"
+                regexp = "MEMBER|VIEWER",
+                message = "Role must be one of: MEMBER, VIEWER"
         )
         String role
 ) {
