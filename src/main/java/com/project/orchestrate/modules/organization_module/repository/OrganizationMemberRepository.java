@@ -108,9 +108,9 @@ public interface OrganizationMemberRepository extends JpaRepository<Organization
                       AND (:status IS NULL OR om.status = :status)
                       AND (:role IS NULL OR om.role = :role)
                       AND (
-                          :query IS NULL
-                          OR LOWER(u.name) LIKE LOWER(CONCAT('%', :query, '%'))
-                          OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))
+                          :query = ''
+                          OR LOWER(u.name) LIKE CONCAT('%', :query, '%')
+                          OR LOWER(u.email) LIKE CONCAT('%', :query, '%')
                       )
                     """,
             countQuery = """
@@ -121,9 +121,9 @@ public interface OrganizationMemberRepository extends JpaRepository<Organization
                       AND (:status IS NULL OR om.status = :status)
                       AND (:role IS NULL OR om.role = :role)
                       AND (
-                          :query IS NULL
-                          OR LOWER(u.name) LIKE LOWER(CONCAT('%', :query, '%'))
-                          OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))
+                          :query = ''
+                          OR LOWER(u.name) LIKE CONCAT('%', :query, '%')
+                          OR LOWER(u.email) LIKE CONCAT('%', :query, '%')
                       )
                     """
     )

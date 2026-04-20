@@ -17,4 +17,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByOrganizationIdAndVisibility(UUID organizationId, ProjectVisibility visibility);
 
     boolean existsByOrganizationIdAndSlug(UUID organizationId, String slug);
+
+    int countByOrganizationId(UUID organizationId);
 }

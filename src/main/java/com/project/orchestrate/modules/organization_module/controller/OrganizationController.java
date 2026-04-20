@@ -127,7 +127,18 @@ public class OrganizationController {
             @RequestParam(defaultValue = "ALL") String role,
             @RequestParam(required = false) String q
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
+        String sortProperty = sortBy;
+        Sort.Direction sortDirection = Sort.Direction.DESC;
+
+        if (sortBy != null && sortBy.contains(",")) {
+            String[] sortParts = sortBy.split(",", 2);
+            sortProperty = sortParts[0].trim();
+            if (sortParts.length > 1 && !sortParts[1].isBlank()) {
+                sortDirection = Sort.Direction.fromString(sortParts[1].trim());
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortProperty));
         return ResponseEntity.ok(organizationService.getOrganizationMembers(organizationId, status, role, q, pageable));
     }
 

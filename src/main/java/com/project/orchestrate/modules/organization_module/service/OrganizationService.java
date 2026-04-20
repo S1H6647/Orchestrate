@@ -177,9 +177,9 @@ public class OrganizationService {
 
     private String normalizeSearchQuery(String query) {
         if (query == null || query.isBlank()) {
-            return null;
+            return "";
         }
-        return query.trim();
+        return query.trim().toLowerCase(Locale.ROOT);
     }
 
     @Transactional
