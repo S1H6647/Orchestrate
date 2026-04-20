@@ -29,7 +29,7 @@ spring:
             enable: true
 
   RabbitMQ:
-    uri: ${RABBITMQ_URI}
+    uri: ${SPRING_RABBITMQ_URI}
 
 app:
   base-url: http://localhost:${PORT:8081}

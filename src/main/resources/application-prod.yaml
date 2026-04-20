@@ -2,7 +2,7 @@ spring:
   server:
     port: ${PORT:8082}
   rabbitmq:
-    uri: ${RABBITMQ_URI:}
+    uri: ${SPRING_RABBITMQ_URI:}
     listener:
       simple:
         auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
