@@ -18,6 +18,7 @@ import com.project.orchestrate.modules.organization_module.model.enums.Organizat
 import com.project.orchestrate.modules.organization_module.model.enums.Plan;
 import com.project.orchestrate.modules.organization_module.repository.OrganizationMemberRepository;
 import com.project.orchestrate.modules.organization_module.repository.OrganizationRepository;
+import com.project.orchestrate.modules.project_module.repository.ProjectRepository;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.MemberStatus;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
@@ -25,12 +26,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import static com.project.orchestrate.common.service.HelperMethodService.randomUUIDToken;
@@ -48,6 +52,7 @@ public class OrganizationService {
     private final OrganizationPlanProperties organizationPlanProperties;
     private final EmailService emailService;
     private final HelperMethodService helper;
+    private final ProjectRepository projectRepository;
 
     @Value("${app.invitation.expiry-hours}")
     private long invitationExpiryHours;
@@ -126,15 +131,55 @@ public class OrganizationService {
                 .toList();
     }
 
-    @Transactional
-    public List<OrganizationMemberResponse> getOrganizationMembers(UUID organizationId) {
-        Organization organization = organizationRepository.findById(organizationId)
+    @Transactional(readOnly = true)
+    public Page<OrganizationMemberResponse> getOrganizationMembers(
+            UUID organizationId,
+            String status,
+            String role,
+            String query,
+            Pageable pageable
+    ) {
+        organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
-        return organization.getMembers()
-                .stream()
-                .map(OrganizationMemberResponse::from)
-                .toList();
+        MemberStatus memberStatusFilter = parseMemberStatus(status);
+        OrganizationRole roleFilter = parseOrganizationRole(role);
+        String normalizedQuery = normalizeSearchQuery(query);
+
+        return organizationMemberRepository
+                .findMembersByFilters(organizationId, memberStatusFilter, roleFilter, normalizedQuery, pageable)
+                .map(OrganizationMemberResponse::from);
+    }
+
+    private MemberStatus parseMemberStatus(String status) {
+        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
+            return null;
+        }
+
+        try {
+            return MemberStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid status. Allowed values: ALL, ACTIVE, INVITED, REMOVED");
+        }
+    }
+
+    private OrganizationRole parseOrganizationRole(String role) {
+        if (role == null || role.isBlank() || "ALL".equalsIgnoreCase(role)) {
+            return null;
+        }
+
+        try {
+            return OrganizationRole.valueOf(role.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role. Allowed values: ALL, OWNER, ADMIN, MEMBER, VIEWER");
+        }
+    }
+
+    private String normalizeSearchQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+        return query.trim();
     }
 
     @Transactional
@@ -530,5 +575,104 @@ public class OrganizationService {
                 newOwner.getUser().getEmail(),
                 newOwner.getUser().getName()
         );
+    }
+
+    public BulkInviteMemberResponse bulkInviteMembers(
+            UUID organizationId,
+            @Valid BulkInviteMembersRequest request,
+            UserPrincipal userPrincipal) {
+
+        organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        OrganizationMember currentMember = organizationMemberRepository
+                .findByOrganizationIdAndUserId(organizationId, userPrincipal.getId())
+                .orElseThrow(() -> new AccessDeniedException("You are not a member of this organization"));
+
+        if (currentMember.getRole() != OrganizationRole.OWNER && currentMember.getRole() != OrganizationRole.ADMIN) {
+            throw new AccessDeniedException("You don't have permission to invite members");
+        }
+
+        List<BulkInviteMemberResponse.Result> results = request.invites().stream()
+                .map(inviteMember -> {
+                    try {
+                        inviteUserToOrganization(
+                                organizationId,
+                                new InviteUserToOrganizationRequest(inviteMember.email(), inviteMember.role()),
+                                userPrincipal
+                        );
+                        return new BulkInviteMemberResponse.Result(
+                                inviteMember.email(),
+                                inviteMember.role(),
+                                true,
+                                "Invitation sent successfully"
+                        );
+                    } catch (Exception e) {
+                        log.error("Failed to invite user: {} with email: {}. Error: {}",
+                                inviteMember.role(), inviteMember.email(), e.getMessage());
+                        return new BulkInviteMemberResponse.Result(
+                                inviteMember.email(),
+                                inviteMember.role(),
+                                false,
+                                "Failed to send invitation: " + e.getMessage()
+                        );
+                    }
+                })
+                .toList();
+
+        int total = results.size();
+        int successCount = (int) results.stream().filter(BulkInviteMemberResponse.Result::success).count();
+        int failureCount = total - successCount;
+
+        return new BulkInviteMemberResponse(total, successCount, failureCount, results);
+    }
+
+    public OrganizationUsageMetricsResponse getOrganizationUsageMetrics(UUID organizationId, UUID userId) {
+        Organization organization = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        OrganizationMember currentMember = organizationMemberRepository
+                .findByOrganizationIdAndUserId(organizationId, userId)
+                .orElseThrow(() -> new AccessDeniedException("You are not a member of this organization"));
+
+        if (currentMember.getRole() != OrganizationRole.OWNER && currentMember.getRole() != OrganizationRole.ADMIN) {
+            throw new AccessDeniedException("You don't have view usage metrics for this organization");
+        }
+
+        int totalMembers = organizationMemberRepository.countByOrganizationIdAndStatus(organizationId, MemberStatus.ACTIVE);
+        int maxMembers = organization.getMaxMembers();
+        int remainingMembers = maxMembers - totalMembers;
+        int totalProjects = projectRepository.countByOrganizationId(organizationId);
+        int maxProjects = organization.getMaxProjects();
+        int remainingProjects = maxProjects - totalProjects;
+
+        return new OrganizationUsageMetricsResponse(
+                organizationId,
+                totalMembers,
+                maxMembers,
+                remainingMembers,
+                totalProjects,
+                maxProjects,
+                remainingProjects);
+    }
+
+    public void leaveOrganization(UUID organizationId, UUID userId) {
+        organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        OrganizationMember currentMember = organizationMemberRepository
+                .findByOrganizationIdAndUserId(organizationId, userId)
+                .orElseThrow(() -> new AccessDeniedException("You are not a member of this organization"));
+
+        if (currentMember.getRole() == OrganizationRole.OWNER) {
+            long ownerCount = organizationMemberRepository.countByOrganizationIdAndRole(organizationId, OrganizationRole.OWNER);
+            if (ownerCount <= 1) {
+                throw new IllegalStateException("You cannot leave the organization as you are the only owner. " +
+                        "Please transfer ownership to another member before leaving.");
+            }
+        }
+
+        currentMember.setStatus(MemberStatus.REMOVED);
+        organizationMemberRepository.save(currentMember);
     }
 }

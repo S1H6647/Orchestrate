@@ -7,6 +7,10 @@ import com.project.orchestrate.modules.organization_module.service.OrganizationS
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -113,9 +117,18 @@ public class OrganizationController {
 
     // GET /api/v1/organizations/{organizationId}/members
     @GetMapping("/{organizationId}/members")
-    @PreAuthorize("@securityService.hasOrgRole(#organizationId, 'OWNER', 'ADMIN', 'MEMBER', 'VIEWER')")
-    public ResponseEntity<List<OrganizationMemberResponse>> getOrganizationMembers(@PathVariable UUID organizationId) {
-        return ResponseEntity.ok(organizationService.getOrganizationMembers(organizationId));
+    @PreAuthorize("@securityService.hasOrgRole(#organizationId, 'OWNER', 'ADMIN', 'MEMBER')")
+    public ResponseEntity<Page<OrganizationMemberResponse>> getOrganizationMembers(
+            @PathVariable UUID organizationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "joinedAt") String sortBy,
+            @RequestParam(defaultValue = "ACTIVE") String status,
+            @RequestParam(defaultValue = "ALL") String role,
+            @RequestParam(required = false) String q
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
+        return ResponseEntity.ok(organizationService.getOrganizationMembers(organizationId, status, role, q, pageable));
     }
 
     // PATCH /api/v1/organizations/{organizationId}/members/{userId}/role
@@ -153,6 +166,17 @@ public class OrganizationController {
     ) {
         organizationService.restoreMember(organizationId, userId, userPrincipal);
         return ResponseEntity.noContent().build();
+    }
+
+    // POST /api/v1/organizations/{organizationId}/members/bulk-invite
+    @PostMapping("/{organizationId}/members/bulk-invite")
+    @PreAuthorize("@securityService.hasOrgRole(#organizationId, 'OWNER', 'ADMIN')")
+    public ResponseEntity<BulkInviteMemberResponse> bulkInviteMembers(
+            @PathVariable UUID organizationId,
+            @Valid @RequestBody BulkInviteMembersRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(organizationService.bulkInviteMembers(organizationId, request, userPrincipal));
     }
 
     // POST /api/v1/organizations/{organizationId}/invitations
@@ -259,8 +283,25 @@ public class OrganizationController {
         return ResponseEntity.noContent().build();
     }
 
-    // POST /api/v1/organizations/{organizationId}/members/bulk-invite
     // GET /api/v1/organizations/{organizationId}/usage-metrics
-    // ?status=&role=&q=&page=&size=
+    @GetMapping("/{organizationId}/usage-metrics")
+    @PreAuthorize("@securityService.hasOrgRole(#organizationId, 'OWNER', 'ADMIN')")
+    public ResponseEntity<OrganizationUsageMetricsResponse> getOrganizationUsageMetrics(
+            @PathVariable UUID organizationId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(organizationService.getOrganizationUsageMetrics(organizationId, userPrincipal.getId()));
+    }
+
+
     // POST /api/v1/organizations/{organizationId}/leave
+    @PostMapping("/{organizationId}/leave")
+    @PreAuthorize("@securityService.hasOrgRole(#organizationId, 'OWNER', 'ADMIN', 'MEMBER', 'VIEWER')")
+    public ResponseEntity<Void> leaveOrganization(
+            @PathVariable UUID organizationId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        organizationService.leaveOrganization(organizationId, userPrincipal.getId());
+        return ResponseEntity.noContent().build();
+    }
 }
