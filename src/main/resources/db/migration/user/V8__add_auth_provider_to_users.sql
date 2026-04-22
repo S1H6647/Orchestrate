@@ -1,0 +1,6 @@
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(20) NOT NULL DEFAULT 'LOCAL';
+
+ALTER TABLE users
+ADD CONSTRAINT chk_users_auth_provider
+CHECK (auth_provider IN ('LOCAL', 'GOOGLE', 'GITHUB'));

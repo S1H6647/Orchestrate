@@ -1,12 +1,6 @@
 spring:
   server:
     port: ${PORT:8082}
-  rabbitmq:
-    uri: ${SPRING_RABBITMQ_URI:}
-    listener:
-      simple:
-        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
-        missing-queues-fatal: false
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -33,6 +27,19 @@ spring:
           auth: true
           starttls:
             enable: true
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT:5671}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
+    virtual-host: ${SPRING_RABBITMQ_VHOST:/}
+    ssl:
+      enabled: true
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
+        missing-queues-fatal: false
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:${PORT:8081}}

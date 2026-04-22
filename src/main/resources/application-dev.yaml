@@ -28,8 +28,34 @@ spring:
           starttls:
             enable: true
 
-  RabbitMQ:
+  rabbitmq:
     uri: ${SPRING_RABBITMQ_URI}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+        #          github:
+        #            client-id: ${GITHUB_CLIENT_ID}
+        #            client-secret: ${GITHUB_CLIENT_SECRET}
+        #            scope:
+        #              - read:user
+        #              - user:email
+
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+#          github:
+#            authorization-uri:
 
 app:
   base-url: http://localhost:${PORT:8081}
@@ -37,15 +63,19 @@ app:
     from: ${MAIL_FROM:${MAIL_USERNAME}}
   invitation:
     expiry-hours: 48      # hours
+  oauth2:
+    authorized-redirect-uri: http://localhost:3000/oauth2/callback
 
 rabbit:
+  enabled: ${RABBIT_ENABLED:true}
   exchange: orchestrate.exchange
   queue: orchestrate.queue
   routing-key: orchestrate.routingkey
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION}
+  access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
+  refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}

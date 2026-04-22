@@ -18,6 +18,9 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Value("${jwt.access-token-expiration}")
+    private long accessTokenExpiration;
+
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -31,7 +34,7 @@ public class JwtService {
                 .add("id", user.getId())
                 .add("role", user.getSystemRole())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7))
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .and()
                 .signWith(getKey())
                 .compact();

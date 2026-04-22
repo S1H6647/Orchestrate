@@ -4,6 +4,7 @@ import com.project.orchestrate.common.exception.InvalidTokenException;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -19,8 +20,8 @@ public class RefreshTokenService {
 
     private final UserRepository userRepository;
 
-    //    @Value("${}")
-    private int expiryDays;
+    @Value("${jwt.refresh-token-expiration}")
+    private int refreshTokenExpiration;
 
     public String generateRefreshToken() {
         byte[] bytes = new byte[64];
@@ -42,7 +43,7 @@ public class RefreshTokenService {
         String rawToken = generateRefreshToken();
 
         user.setRefreshToken(hash(rawToken));
-        user.setRefreshTokenExpiresAt(LocalDateTime.now().plusDays(expiryDays));
+        user.setRefreshTokenExpiresAt(LocalDateTime.now().plusDays(refreshTokenExpiration));
         userRepository.save(user);
 
         return rawToken;

@@ -2,6 +2,7 @@ package com.project.orchestrate.modules.user_module.model;
 
 import com.project.orchestrate.modules.organization_module.model.OrganizationMember;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
+import com.project.orchestrate.modules.user_module.model.enums.AuthProvider;
 import com.project.orchestrate.modules.user_module.model.enums.SystemRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -46,6 +47,11 @@ public class User {
 
     @Column(length = 20)
     private String phone;                   // optional phone number
+
+    // ── Account Type ─────────────────────────────────
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AuthProvider authProvider = AuthProvider.LOCAL;  // LOCAL and GOOGLE
 
     // ── System-level Role ─────────────────────────────────
     @Enumerated(EnumType.STRING)

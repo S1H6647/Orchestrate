@@ -2,7 +2,10 @@ spring:
   application:
     name: Orchestrate
   config:
-    import: optional:file:src/main/resources/.env[.properties]
+    import: optional:file:.env[.properties],optional:file:src/main/resources/.env[.properties]
+    activate:
+      on-profile: dev
+      import: optional:file:src/main/resources/dev.env[.properties]
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   flyway:
