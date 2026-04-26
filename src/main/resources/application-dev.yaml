@@ -41,12 +41,6 @@ spring:
             scope:
               - profile
               - email
-        #          github:
-        #            client-id: ${GITHUB_CLIENT_ID}
-        #            client-secret: ${GITHUB_CLIENT_SECRET}
-        #            scope:
-        #              - read:user
-        #              - user:email
 
         provider:
           google:
@@ -54,8 +48,6 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
-#          github:
-#            authorization-uri:
 
 app:
   base-url: http://localhost:${PORT:8081}

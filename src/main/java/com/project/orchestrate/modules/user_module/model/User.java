@@ -39,7 +39,7 @@ public class User {
     @Column(unique = true, nullable = false, length = 100)
     private String email;                   // unique email — used for login and notifications
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;                // hashed password (bcrypt or similar)
 
     @Column(length = 255)

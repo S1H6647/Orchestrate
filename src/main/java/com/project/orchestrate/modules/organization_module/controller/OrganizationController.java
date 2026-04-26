@@ -1,5 +1,6 @@
 package com.project.orchestrate.modules.organization_module.controller;
 
+import com.project.orchestrate.common.dto.PageResponse;
 import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
 import com.project.orchestrate.modules.organization_module.dto.*;
 import com.project.orchestrate.modules.organization_module.model.enums.OrganizationScope;
@@ -7,7 +8,6 @@ import com.project.orchestrate.modules.organization_module.service.OrganizationS
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -118,7 +118,7 @@ public class OrganizationController {
     // GET /api/v1/organizations/{organizationId}/members
     @GetMapping("/{organizationId}/members")
     @PreAuthorize("@securityService.hasOrgRole(#organizationId, 'OWNER', 'ADMIN', 'MEMBER')")
-    public ResponseEntity<Page<OrganizationMemberResponse>> getOrganizationMembers(
+    public ResponseEntity<PageResponse<OrganizationMemberResponse>> getOrganizationMembers(
             @PathVariable UUID organizationId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -139,7 +139,9 @@ public class OrganizationController {
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortProperty));
-        return ResponseEntity.ok(organizationService.getOrganizationMembers(organizationId, status, role, q, pageable));
+        return ResponseEntity.ok(
+                PageResponse.from(organizationService.getOrganizationMembers(organizationId, status, role, q, pageable))
+        );
     }
 
     // PATCH /api/v1/organizations/{organizationId}/members/{userId}/role

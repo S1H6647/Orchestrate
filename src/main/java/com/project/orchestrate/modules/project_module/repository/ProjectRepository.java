@@ -6,6 +6,7 @@ import com.project.orchestrate.modules.project_module.model.enums.ProjectVisibil
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
@@ -17,6 +18,8 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByOrganizationIdAndVisibility(UUID organizationId, ProjectVisibility visibility);
 
     boolean existsByOrganizationIdAndSlug(UUID organizationId, String slug);
+
+    Optional<Project> findByOrganizationIdAndSlug(UUID organizationId, String slug);
 
     int countByOrganizationId(UUID organizationId);
 }

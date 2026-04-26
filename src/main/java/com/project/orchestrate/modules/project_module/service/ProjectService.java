@@ -9,8 +9,7 @@ import com.project.orchestrate.modules.organization_module.model.OrganizationMem
 import com.project.orchestrate.modules.organization_module.model.enums.OrganizationRole;
 import com.project.orchestrate.modules.organization_module.repository.OrganizationMemberRepository;
 import com.project.orchestrate.modules.organization_module.repository.OrganizationRepository;
-import com.project.orchestrate.modules.project_module.dto.CreateProjectRequest;
-import com.project.orchestrate.modules.project_module.dto.ProjectResponse;
+import com.project.orchestrate.modules.project_module.dto.*;
 import com.project.orchestrate.modules.project_module.model.Project;
 import com.project.orchestrate.modules.project_module.model.ProjectMember;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectRole;
@@ -19,6 +18,7 @@ import com.project.orchestrate.modules.project_module.model.enums.ProjectVisibil
 import com.project.orchestrate.modules.project_module.repository.ProjectMemberRepository;
 import com.project.orchestrate.modules.project_module.repository.ProjectRepository;
 import com.project.orchestrate.modules.user_module.model.User;
+import com.project.orchestrate.modules.user_module.model.enums.MemberStatus;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -107,6 +107,130 @@ public class ProjectService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public ProjectResponse getProjectBySlug(UUID orgId, String projectSlug, UUID userId) {
+        assertOrgMember(userId, orgId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        OrganizationRole orgRole = getOrgRole(userId, orgId);
+        if (!canAccessProject(currentUser, project, orgRole)) {
+            throw new AccessDeniedException("You do not have access to this project");
+        }
+
+        return ProjectResponse.from(project);
+    }
+
+    @Transactional
+    public ProjectResponse updateProject(UUID orgId, String projectSlug, @Valid UpdateProjectRequest request, UUID userId) {
+        assertOrgMember(userId, orgId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        if (request.name() != null && !request.name().isBlank()) {
+            String newName = request.name().trim();
+            project.setSlug(newName.equals(project.getName()) ? project.getSlug() : helper.generateSlug(orgId, newName));
+            project.setName(newName);
+        }
+        if (request.description() != null) {
+            project.setDescription(request.description());
+        }
+        if (request.color() != null) {
+            project.setColor(request.color());
+        }
+        if (request.coverImageUrl() != null) {
+            project.setCoverImageUrl(request.coverImageUrl());
+        }
+        if (request.visibility() != null) {
+            project.setVisibility(request.visibility());
+        }
+        if (request.status() != null) {
+            project.setStatus(request.status());
+        }
+        if (request.startDate() != null) {
+            project.setStartDate(request.startDate());
+        }
+        if (request.targetDate() != null) {
+            project.setTargetDate(request.targetDate());
+        }
+        if (request.leadId() != null) {
+            User lead = userRepository.findById(request.leadId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Lead user not found"));
+            project.setLead(lead);
+        }
+
+        Project saved = projectRepository.save(project);
+        return ProjectResponse.from(saved);
+    }
+
+    @Transactional
+    public void archiveProject(UUID orgId, String projectSlug, UUID userId) {
+        assertOrgMember(userId, orgId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        project.setStatus(ProjectStatus.ARCHIVED);
+        projectRepository.save(project);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectMemberResponse> getMembers(UUID orgId, String projectSlug, UUID userId) {
+        assertOrgMember(userId, orgId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        return projectMemberRepository.findAllByProjectId(project.getId())
+                .stream()
+                .map(ProjectMemberResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public ProjectMemberResponse addMember(UUID orgId, String projectSlug, @Valid AddProjectMemberRequest request, UUID userId) {
+        assertOrgMember(userId, orgId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        OrganizationMember orgMember = orgMemberRepository.findByOrganizationIdAndUserId(orgId, request.userId())
+                .orElseThrow(() -> new AccessDeniedException("User is not a member of the organization"));
+
+        if (orgMember.getStatus() != MemberStatus.ACTIVE) {
+            throw new AccessDeniedException("User membership is not active");
+        }
+
+        ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(project.getId(), request.userId())
+                .orElse(ProjectMember.builder()
+                        .project(project)
+                        .user(user)
+                        .build());
+
+        member.setRole(request.role());
+        ProjectMember saved = projectMemberRepository.save(member);
+
+        return ProjectMemberResponse.from(saved);
+    }
+
+    @Transactional
+    public void removeMember(UUID orgId, String projectSlug, UUID targetUserId, UUID userId) {
+        assertOrgMember(userId, orgId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        projectMemberRepository.deleteByProjectIdAndUserId(project.getId(), targetUserId);
+    }
+
     // ── Access Control Helpers ─────────────────────────────
 
     private void assertOrgMember(UUID userId, UUID organizationId) {
@@ -132,4 +256,12 @@ public class ProjectService {
     }
 
 
+    public void deleteProject(UUID organizationId, String projectSlug, @Valid UpdateProjectRequest request, UUID id) {
+        assertOrgMember(id, organizationId);
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(organizationId, projectSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        projectRepository.delete(project);
+    }
 }

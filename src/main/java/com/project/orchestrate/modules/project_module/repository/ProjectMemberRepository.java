@@ -2,6 +2,9 @@ package com.project.orchestrate.modules.project_module.repository;
 
 import com.project.orchestrate.modules.project_module.model.ProjectMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,4 +23,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     // Count members — for plan limit checks
     long countByProjectId(UUID projectId);
+
+    @Modifying
+    @Query("delete from ProjectMember pm where pm.project.id = :projectId and pm.user.id = :userId")
+    void deleteByProjectIdAndUserId(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
 }

@@ -8,6 +8,7 @@ import com.project.orchestrate.modules.auth_module.messaging.AccountVerification
 import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
+import com.project.orchestrate.modules.user_module.model.enums.AuthProvider;
 import com.project.orchestrate.modules.user_module.model.enums.SystemRole;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -46,6 +47,7 @@ public class AuthService {
                 .systemRole(SystemRole.USER)
                 .verificationToken(randomUUIDToken())
                 .verificationTokenExpiresAt(LocalDateTime.now().plusHours(24))
+                .authProvider(AuthProvider.LOCAL)
                 .build();
 
         var saved = userRepository.save(user);

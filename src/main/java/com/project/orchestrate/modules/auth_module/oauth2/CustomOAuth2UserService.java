@@ -4,6 +4,7 @@ package com.project.orchestrate.modules.auth_module.oauth2;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
 import com.project.orchestrate.modules.user_module.model.enums.AuthProvider;
+import com.project.orchestrate.modules.user_module.model.enums.SystemRole;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -37,12 +38,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User registerNewOAuthUser(String email, String name) {
-        User user = new User();
-        user.setEmail(email);
-        user.setName(name);
-        user.setAuthProvider(AuthProvider.GOOGLE); // track how they signed up
-        user.setStatus(AccountStatus.ACTIVE);         // OAuth users skip email verification
-        user.setPassword(null);                    // no password for OAuth users
+        User user = User.builder()
+                .email(email)
+                .name(name)
+                .authProvider(AuthProvider.GOOGLE) // track how they signed up
+                .password(null)                    // no password for OAuth users
+                .status(AccountStatus.ACTIVE)      // OAuth users skip email verification
+                .systemRole(SystemRole.USER)
+                .verificationToken(null)
+                .verificationTokenExpiresAt(null)
+                .build();
         return userRepository.save(user);
     }
 
