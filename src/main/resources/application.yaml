@@ -1,3 +1,6 @@
+server:
+  port: ${PORT:8080}
+  
 spring:
   application:
     name: Orchestrate
@@ -12,6 +15,5 @@ spring:
     locations:
       - classpath:db/migration/user
       - classpath:db/migration/project
+      - classpath:db/migration/task
 
-server:
-  port: ${PORT:8080}
