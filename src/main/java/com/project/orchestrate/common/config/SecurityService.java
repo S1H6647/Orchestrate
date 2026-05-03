@@ -141,4 +141,43 @@ public class SecurityService {
 
         throw new AccessDeniedException("User does not have the required project or organization role");
     }
+
+    public boolean hasProjectRoleOrOrgRoleBySlugAny(
+            UUID orgId,
+            String projectSlug,
+            String... allowedRoles
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal userPrincipal)) {
+            throw new AccessDeniedException("User is not authenticated");
+        }
+
+        Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
+                .orElseThrow(() -> new AccessDeniedException("Project not found"));
+
+        OrganizationMember orgMember = organizationMemberRepository
+                .findByOrganizationIdAndUserId(orgId, userPrincipal.getId())
+                .orElseThrow(() -> new AccessDeniedException("User is not a member of the organization"));
+
+        if (orgMember.getStatus() != MemberStatus.ACTIVE) {
+            throw new AccessDeniedException("User membership is not active");
+        }
+
+        boolean hasAllowedOrgRole = Arrays.stream(allowedRoles)
+                .anyMatch(role -> role.equals(orgMember.getRole().name()));
+        if (hasAllowedOrgRole) {
+            return true;
+        }
+
+        ProjectMember projectMember = projectMemberRepository
+                .findByProjectIdAndUserId(project.getId(), userPrincipal.getId())
+                .orElse(null);
+
+        if (projectMember == null) {
+            return false;
+        }
+
+        return Arrays.stream(allowedRoles)
+                .anyMatch(role -> role.equals(projectMember.getRole().name()));
+    }
 }

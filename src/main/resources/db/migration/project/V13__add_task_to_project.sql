@@ -1,0 +1,9 @@
+-- -- 1. Add FK column
+-- ALTER TABLE tasks
+--     ADD COLUMN project_id UUID;
+--
+-- -- 2. Add constraint
+-- ALTER TABLE tasks
+--     ADD CONSTRAINT fk_task_project
+--         FOREIGN KEY (project_id)
+--             REFERENCES project (id);

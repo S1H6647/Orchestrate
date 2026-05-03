@@ -4,6 +4,7 @@ import com.project.orchestrate.modules.organization_module.model.Organization;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectStatus;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectType;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectVisibility;
+import com.project.orchestrate.modules.task_module.model.Task;
 import com.project.orchestrate.modules.user_module.model.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -104,6 +105,6 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Task> tasks = new ArrayList<>();
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> tasks = new ArrayList<>();
 }

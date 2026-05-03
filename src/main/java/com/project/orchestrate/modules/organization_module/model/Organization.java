@@ -47,6 +47,9 @@ public class Organization {
     @Column(length = 255)
     private String websiteUrl;              // optional company website
 
+    @Column(nullable = false)
+    private Long taskSequence = 0L;         // incremented on every task creation
+
     // ── Plan / Subscription ───────────────────────────────
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

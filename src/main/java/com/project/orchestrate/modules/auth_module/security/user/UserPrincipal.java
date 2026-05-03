@@ -20,6 +20,10 @@ public class UserPrincipal implements UserDetails {
         return new UserPrincipal(user);
     }
 
+    public User getUser() {
+        return this.user;
+    }
+
     public UUID getId() {
         return user.getId();
     }
