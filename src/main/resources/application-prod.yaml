@@ -31,6 +31,8 @@ spring:
         smtp:
           auth: true
           starttls:
+            enable: false
+          ssl:
             enable: true
 
   rabbitmq:
@@ -43,7 +45,7 @@ spring:
       enabled: true
     listener:
       simple:
-        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
+        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:true}
         missing-queues-fatal: false
 
   security:

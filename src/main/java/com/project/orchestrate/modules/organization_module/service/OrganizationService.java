@@ -80,6 +80,7 @@ public class OrganizationService {
                 .description(request.description())
                 .logoUrl(logoUrl)
                 .websiteUrl(request.websiteUrl())
+                .taskSequence(0L)
                 .createdBy(user)
                 .maxMembers(limits.getMaxMembers())
                 .maxProjects(limits.getMaxProjects())
@@ -100,11 +101,10 @@ public class OrganizationService {
     }
 
     @Transactional
-    public List<OrganizationResponse> getAllOrganizations() {
-        return organizationRepository.findAll()
-                .stream()
-                .map(organizationMapper::mapToOrganizationResponse)
-                .toList();
+    public Page<OrganizationResponse> getAllOrganizations(String q, Pageable pageable) {
+        String normalizedQuery = helper.normalizeSearchQuery(q);
+        return organizationRepository.searchOrganizations(normalizedQuery, pageable)
+                .map(organizationMapper::mapToOrganizationResponse);
     }
 
     @Transactional(readOnly = true)
@@ -144,7 +144,7 @@ public class OrganizationService {
 
         MemberStatus memberStatusFilter = parseMemberStatus(status);
         OrganizationRole roleFilter = parseOrganizationRole(role);
-        String normalizedQuery = normalizeSearchQuery(query);
+        String normalizedQuery = helper.normalizeSearchQuery(query);
 
         return organizationMemberRepository
                 .findMembersByFilters(organizationId, memberStatusFilter, roleFilter, normalizedQuery, pageable)
@@ -173,13 +173,6 @@ public class OrganizationService {
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid role. Allowed values: ALL, OWNER, ADMIN, MEMBER, VIEWER");
         }
-    }
-
-    private String normalizeSearchQuery(String query) {
-        if (query == null || query.isBlank()) {
-            return "";
-        }
-        return query.trim().toLowerCase(Locale.ROOT);
     }
 
     @Transactional
@@ -423,6 +416,22 @@ public class OrganizationService {
         } else {
             throw new AccessDeniedException("You are not a member of this organization");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public OrganizationResponse getOrganizationBySlug(String slug, UserPrincipal userPrincipal) {
+        Organization organization = organizationRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        if (organizationMemberRepository.existsByOrganizationIdAndUserId(organization.getId(), userPrincipal.getId())) {
+            return organizationMapper.mapToOrganizationResponse(organization);
+        }
+
+        if (userPrincipal != null && "SYSTEM_ADMIN".equals(userPrincipal.getRole())) {
+            return organizationMapper.mapToOrganizationResponse(organization);
+        }
+
+        throw new AccessDeniedException("You are not a member of this organization");
     }
 
     @Transactional(readOnly = true)

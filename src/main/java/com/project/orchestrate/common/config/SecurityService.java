@@ -32,6 +32,10 @@ public class SecurityService {
             throw new AccessDeniedException("User is not authenticated");
         }
 
+        if ("SYSTEM_ADMIN".equals(userPrincipal.getRole())) {
+            return true;
+        }
+
         OrganizationMember member = organizationMemberRepository
                 .findByOrganizationIdAndUserId(organizationId, userPrincipal.getId())
                 .orElseThrow(() -> new AccessDeniedException("User is not a member of the organization"));
@@ -54,6 +58,10 @@ public class SecurityService {
             throw new AccessDeniedException("User is not authenticated");
         }
 
+        if ("SYSTEM_ADMIN".equals(userPrincipal.getRole())) {
+            return true;
+        }
+
         ProjectMember member = projectMemberRepository
                 .findByProjectIdAndUserId(projectId, userPrincipal.getId())
                 .orElseThrow(() -> new AccessDeniedException("User is not a member of the project"));
@@ -74,6 +82,10 @@ public class SecurityService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal userPrincipal)) {
             throw new AccessDeniedException("User is not authenticated");
+        }
+
+        if ("SYSTEM_ADMIN".equals(userPrincipal.getRole())) {
+            return true;
         }
 
         Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
@@ -114,6 +126,10 @@ public class SecurityService {
             throw new AccessDeniedException("User is not authenticated");
         }
 
+        if ("SYSTEM_ADMIN".equals(userPrincipal.getRole())) {
+            return true;
+        }
+
         Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)
                 .orElseThrow(() -> new AccessDeniedException("Project not found"));
 
@@ -150,6 +166,10 @@ public class SecurityService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal userPrincipal)) {
             throw new AccessDeniedException("User is not authenticated");
+        }
+
+        if ("SYSTEM_ADMIN".equals(userPrincipal.getRole())) {
+            return true;
         }
 
         Project project = projectRepository.findByOrganizationIdAndSlug(orgId, projectSlug)

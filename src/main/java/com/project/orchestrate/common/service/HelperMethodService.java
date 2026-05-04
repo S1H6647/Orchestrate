@@ -4,6 +4,7 @@ import com.project.orchestrate.modules.project_module.repository.ProjectReposito
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
 import java.util.UUID;
 
 @Component
@@ -41,5 +42,12 @@ public class HelperMethodService {
             slug = base + "-" + suffix++;
         }
         return slug;
+    }
+
+    public String normalizeSearchQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return "";
+        }
+        return query.trim().toLowerCase(Locale.ROOT);
     }
 }

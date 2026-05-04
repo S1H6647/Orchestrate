@@ -4,8 +4,8 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.MailException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -31,8 +31,9 @@ public class EmailService {
     @Async
     public void sendVerificationEmail(String toEmail, String name, String token) {
         try {
-            String verificationLink = baseUrl + "/api/v1/auth/verify?token=" + token;
-            String resendVerificationLink = baseUrl + "/api/v1/auth/resend-verification?email=" +
+            log.info("Verification email sent to email: {} and base url: {}", toEmail, baseUrl);
+            String verificationLink = baseUrl + "/verify?token=" + token;
+            String resendVerificationLink = baseUrl + "/resend-verification?email=" +
                     URLEncoder.encode(toEmail, StandardCharsets.UTF_8);
 
             MimeMessage message = mailSender.createMimeMessage();

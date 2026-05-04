@@ -34,8 +34,28 @@ public class OrganizationController {
     // GET /api/v1/organizations/all
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @GetMapping("/all")
-    public ResponseEntity<List<OrganizationResponse>> getOrganizations() {
-        return ResponseEntity.ok(organizationService.getAllOrganizations());
+    public ResponseEntity<PageResponse<OrganizationResponse>> getOrganizations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "joinedAt") String sortBy,
+            @RequestParam(required = false) String q
+    ) {
+        String sortProperty = sortBy;
+        Sort.Direction sortDirection = Sort.Direction.DESC;
+
+        if (sortBy != null && sortBy.contains(",")) {
+            String[] sortParts = sortBy.split(",", 2);
+            sortProperty = sortParts[0].trim();
+            if (sortParts.length > 1 && !sortParts[1].isBlank()) {
+                sortDirection = Sort.Direction.fromString(sortParts[1].trim());
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortProperty));
+
+        return ResponseEntity.ok(
+                PageResponse.from(organizationService.getAllOrganizations(q, pageable))
+        );
     }
 
     // GET /api/v1/organizations/my-organizations
@@ -63,6 +83,15 @@ public class OrganizationController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         return ResponseEntity.ok(organizationService.getOrganizationById(organizationId, userPrincipal.getId()));
+    }
+
+    // GET /api/v1/organizations/slug/{slug}
+    @GetMapping("/slug/{slug}")
+    public ResponseEntity<OrganizationResponse> getOrganizationBySlug(
+            @PathVariable String slug,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(organizationService.getOrganizationBySlug(slug, userPrincipal));
     }
 
     // POST /api/v1/organizations
