@@ -39,13 +39,15 @@ public class AuthService {
                     String.format("User with email %s already exists", request.email()));
         }
 
+        String verificationToken = randomUUIDToken();
+
         User user = User.builder()
                 .name(request.name())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
                 .status(AccountStatus.PENDING_VERIFICATION)
                 .systemRole(SystemRole.USER)
-                .verificationToken(randomUUIDToken())
+                .verificationToken(verificationToken)
                 .verificationTokenExpiresAt(LocalDateTime.now().plusHours(24))
                 .authProvider(AuthProvider.LOCAL)
                 .build();

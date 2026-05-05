@@ -1,25 +1,26 @@
 package com.project.orchestrate.modules.notification_module.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.project.orchestrate.modules.notification_module.dto.BrevoEmailRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final WebClient brevoWebClient;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -29,49 +30,43 @@ public class EmailService {
 
     // ── Verification Email ─────────────────────────────────
     @Async
-    public void sendVerificationEmail(String toEmail, String name, String token) {
-        try {
-            log.info("Verification email sent to email: {} and base url: {}", toEmail, baseUrl);
-            String verificationLink = baseUrl + "/verify?token=" + token;
-            String resendVerificationLink = baseUrl + "/resend-verification?email=" +
-                    URLEncoder.encode(toEmail, StandardCharsets.UTF_8);
+    public void sendVerificationEmail(
+            String toEmail,
+            String name,
+            String token
+    ) {
+        String verificationLink = baseUrl + "/verify?token=" + token;
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String resendVerificationLink = baseUrl + "/resend-verification?email=" +
+                URLEncoder.encode(toEmail, StandardCharsets.UTF_8);
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Verify your email — PMS");
-            helper.setText(buildVerificationEmailBody(name, verificationLink, resendVerificationLink), true); // true = HTML
+        String html = buildVerificationEmailBody(
+                name,
+                verificationLink,
+                resendVerificationLink
+        );
 
-            mailSender.send(message);
-            log.info("Verification email sent to {}", toEmail);
+        sendEmailWithLogging(
+                toEmail,
+                name,
+                "Verify your email — Orchestrate",
+                html
+        );
 
-        } catch (MessagingException | MailException e) {
-            log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
-            // Don't rethrow — email failure should not crash registration
-            // User can always use resend endpoint
-        }
+        log.info("Verification email was sent to {}", toEmail);
     }
 
     // ── Welcome Email ──────────────────────────────────────
     @Async
     public void sendWelcomeEmail(String toEmail, String name) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String html = buildWelcomeEmailBody(name);
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Welcome to PMS");
-            helper.setText(buildWelcomeEmailBody(name), true);
-
-            mailSender.send(message);
-            log.info("Welcome email sent to {}", toEmail);
-
-        } catch (MessagingException | MailException e) {
-            log.error("Failed to send welcome email to {}: {}", toEmail, e.getMessage());
-        }
+        sendEmailWithLogging(
+                toEmail,
+                name,
+                "Welcome to Orchestrate",
+                html
+        );
     }
 
     // ── Organization Invitation Email ─────────────────────
@@ -84,33 +79,23 @@ public class EmailService {
             String role,
             String inviteToken
     ) {
-        try {
-            String inviteLink = baseUrl + "/api/v1/organizations/invitations/accept?token=" +
-                    URLEncoder.encode(inviteToken, StandardCharsets.UTF_8);
+        String inviteLink = baseUrl + "/api/v1/organizations/invitations/accept?token=" +
+                URLEncoder.encode(inviteToken, StandardCharsets.UTF_8);
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String html = buildOrganizationInvitationEmailBody(
+                inviteeName,
+                inviterName,
+                organizationName,
+                role,
+                inviteLink
+        );
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("You're invited to join " + organizationName + " - PMS");
-            helper.setText(
-                    buildOrganizationInvitationEmailBody(
-                            inviteeName,
-                            inviterName,
-                            organizationName,
-                            role,
-                            inviteLink
-                    ),
-                    true
-            );
-
-            mailSender.send(message);
-            log.info("Organization invitation email sent to {} for organization {}", toEmail, organizationName);
-
-        } catch (MessagingException | MailException e) {
-            log.error("Failed to send organization invitation email to {}: {}", toEmail, e.getMessage());
-        }
+        sendEmailWithLogging(
+                toEmail,
+                inviteeName,
+                "You have been invited to join Orchestrate",
+                html
+        );
     }
 
     // ── Organization Deletion Email ───────────────────────
@@ -120,21 +105,15 @@ public class EmailService {
             String ownerName,
             String organizationName
     ) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String html = buildOrganizationDeletionEmailBody(ownerName, organizationName);
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Organization deleted: " + organizationName + " - PMS");
-            helper.setText(buildOrganizationDeletionEmailBody(ownerName, organizationName), true);
+        sendEmailWithLogging(
+                toEmail,
+                ownerName,
+                "Organization deleted — Orchestrate",
+                html
+        );
 
-            mailSender.send(message);
-            log.info("Organization deletion email sent to {} for organization {}", toEmail, organizationName);
-
-        } catch (MessagingException | MailException e) {
-            log.error("Failed to send organization deletion email to {}: {}", toEmail, e.getMessage());
-        }
     }
 
     // ── Organization Ownership Transfer Emails ─────────────
@@ -147,30 +126,20 @@ public class EmailService {
             String newOwnerName,
             String newOwnerEmail
     ) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String html = buildOwnershipTransferredFromOwnerEmailBody(
+                previousOwnerName,
+                organizationName,
+                organizationSlug,
+                newOwnerName,
+                newOwnerEmail
+        );
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Ownership transferred: " + organizationName + " - PMS");
-            helper.setText(
-                    buildOwnershipTransferredFromOwnerEmailBody(
-                            previousOwnerName,
-                            organizationName,
-                            organizationSlug,
-                            newOwnerName,
-                            newOwnerEmail
-                    ),
-                    true
-            );
-
-            mailSender.send(message);
-            log.info("Ownership transfer email sent to previous owner {} for organization {}", toEmail, organizationName);
-
-        } catch (MessagingException | MailException e) {
-            log.error("Failed to send ownership transfer email to previous owner {}: {}", toEmail, e.getMessage());
-        }
+        sendEmailWithLogging(
+                toEmail,
+                previousOwnerName,
+                "Ownership transferred — Orchestrate",
+                html
+        );
     }
 
     @Async
@@ -182,30 +151,79 @@ public class EmailService {
             String previousOwnerName,
             String previousOwnerEmail
     ) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String html = buildOwnershipTransferredToOwnerEmailBody(
+                newOwnerName,
+                organizationName,
+                organizationSlug,
+                previousOwnerName,
+                previousOwnerEmail
+        );
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("You are now owner: " + organizationName + " - PMS");
-            helper.setText(
-                    buildOwnershipTransferredToOwnerEmailBody(
-                            newOwnerName,
-                            organizationName,
-                            organizationSlug,
-                            previousOwnerName,
-                            previousOwnerEmail
-                    ),
-                    true
-            );
+        sendEmailWithLogging(
+                toEmail,
+                newOwnerName,
+                "Ownership transferred — Orchestrate",
+                html
+        );
+    }
 
-            mailSender.send(message);
-            log.info("Ownership transfer email sent to new owner {} for organization {}", toEmail, organizationName);
+    private void sendEmailWithLogging(
+            String toEmail,
+            String toName,
+            String subject,
+            String htmlContent
+    ) {
+        sendEmail(
+                toEmail,
+                toName,
+                subject,
+                htmlContent
+        )
+                .timeout(Duration.ofSeconds(20))
+                .doOnSuccess(unused -> log.info("Email sent to {}", toEmail))
+                .doOnError(error -> log.error("Email failed to {}: {}", toEmail, error.getMessage()))
+                .subscribe();
+    }
 
-        } catch (MessagingException | MailException e) {
-            log.error("Failed to send ownership transfer email to new owner {}: {}", toEmail, e.getMessage());
-        }
+    private Mono<Void> sendEmail(
+            String toEmail,
+            String toName,
+            String subject,
+            String htmlContent
+    ) {
+
+        BrevoEmailRequest.Sender sender = BrevoEmailRequest.Sender.builder()
+                .name("Orchestrate")
+                .email(fromEmail)
+                .build();
+
+        BrevoEmailRequest.Recipient recipient = BrevoEmailRequest.Recipient.builder()
+                .name(toName != null ? toName : "User")
+                .email(toEmail)
+                .build();
+
+        BrevoEmailRequest payload = BrevoEmailRequest.builder()
+                .sender(sender)
+                .to(List.of(recipient))
+                .subject(subject)
+                .htmlContent(htmlContent)
+                .build();
+
+        return brevoWebClient.post()
+                .uri("/smtp/email")
+                .bodyValue(payload)
+                .retrieve()
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        response -> response.bodyToMono(String.class)
+                                .map(body -> new RuntimeException("Client error: " + body))
+                )
+                .onStatus(
+                        HttpStatusCode::is5xxServerError,
+                        response -> response.bodyToMono(String.class)
+                                .map(body -> new RuntimeException("Server error: " + body))
+                )
+                .bodyToMono(Void.class);
     }
 
     // ── Email Templates ────────────────────────────────────

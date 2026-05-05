@@ -103,3 +103,7 @@ organization:
     ENTERPRISE:
       max-members: 200
       max-projects: 500
+
+brevo:
+  base-url: https://api.brevo.com/v3
+  api-key: ${BREVO_API_KEY}
