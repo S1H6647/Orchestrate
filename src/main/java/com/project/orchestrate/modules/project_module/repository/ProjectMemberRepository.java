@@ -21,7 +21,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     @Query("SELECT pm FROM ProjectMember pm JOIN FETCH pm.user WHERE pm.project.id = :projectId")
     List<ProjectMember> findAllByProjectIdWithUser(UUID projectId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("delete from ProjectMember pm where pm.project.id = :projectId and pm.user.id = :userId")
     void deleteByProjectIdAndUserId(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
 }

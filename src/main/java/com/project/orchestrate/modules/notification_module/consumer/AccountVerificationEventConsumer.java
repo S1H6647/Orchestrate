@@ -25,9 +25,12 @@ public class AccountVerificationEventConsumer {
         String name = event.name();
         String token = event.token();
 
-        switch (isVerified) {
-            case "false" -> emailService.sendVerificationEmail(toEmail, name, token);
-            case "true" -> emailService.sendWelcomeEmail(toEmail, name);
+        if ("false".equals(isVerified)) {
+            emailService.sendVerificationEmail(toEmail, name, token);
+        } else if ("true".equals(isVerified)) {
+            emailService.sendWelcomeEmail(toEmail, name);
+        } else {
+            log.warn("AccountVerificationEvent missing isVerified for {}", toEmail);
         }
     }
 }

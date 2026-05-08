@@ -246,7 +246,7 @@ public class ProjectService {
         if (project.getVisibility() == ProjectVisibility.PUBLIC)
             return true;
 
-        return projectMemberRepository.existsByProjectIdAndUserId(user.getId(), project.getId());
+        return projectMemberRepository.existsByProjectIdAndUserId(project.getId(), user.getId());
     }
 
     private OrganizationRole getOrgRole(UUID userId, UUID orgId) {

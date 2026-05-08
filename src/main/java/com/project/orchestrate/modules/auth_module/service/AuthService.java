@@ -85,13 +85,6 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = refreshTokenService.createAndStore(user);
 
-        publisher.publishAccountVerificationEvent(new AccountVerificationEvent(
-                user.getEmail(),
-                user.getName(),
-                user.getVerificationToken(),
-                String.valueOf(user.isEmailVerified())
-        ));
-
         return userMapper.mapLoginResponse(user, accessToken, refreshToken);
     }
 
@@ -122,7 +115,14 @@ public class AuthService {
         user.setVerificationToken(null);
         user.setVerificationTokenExpiresAt(null);
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+
+        publisher.publishAccountVerificationEvent(new AccountVerificationEvent(
+                saved.getEmail(),
+                saved.getName(),
+                null,
+                String.valueOf(saved.isEmailVerified())
+        ));
     }
 
     public void resendVerificationEmail(ResendVerificationRequest request) {

@@ -11,6 +11,7 @@ import com.project.orchestrate.modules.project_module.repository.ProjectMemberRe
 import com.project.orchestrate.modules.project_module.repository.ProjectRepository;
 import com.project.orchestrate.modules.user_module.model.enums.MemberStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @Service("securityService")
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityService {
 
     private final OrganizationMemberRepository organizationMemberRepository;
@@ -137,7 +139,7 @@ public class SecurityService {
                 .findByOrganizationIdAndUserId(orgId, userPrincipal.getId())
                 .orElseThrow(() -> new AccessDeniedException("User is not a member of the organization"));
 
-        if (orgMember.getStatus() != MemberStatus.ACTIVE) {
+        if (orgMember.getStatus() != MemberStatus.ACTIVE && orgMember.getStatus() != MemberStatus.INVITED) {
             throw new AccessDeniedException("User membership is not active");
         }
 
@@ -151,11 +153,12 @@ public class SecurityService {
                 .findByProjectIdAndUserId(project.getId(), userPrincipal.getId())
                 .orElseThrow(() -> new AccessDeniedException("User is not a member of the project"));
 
-        if (projectRole.equals(projectMember.getRole().name())) {
-            return true;
+        boolean hasAllowedProjectRole = projectRole.equals(projectMember.getRole().name());
+        if (!hasAllowedProjectRole) {
+            throw new AccessDeniedException("User does not have the required project role");
         }
 
-        throw new AccessDeniedException("User does not have the required project or organization role");
+        return true;
     }
 
     public boolean hasProjectRoleOrOrgRoleBySlugAny(
