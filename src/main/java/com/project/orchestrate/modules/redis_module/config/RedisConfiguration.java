@@ -1,4 +1,4 @@
-package com.project.orchestrate.common.config;
+package com.project.orchestrate.modules.redis_module.config;
 
 import com.project.orchestrate.modules.redis_module.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
