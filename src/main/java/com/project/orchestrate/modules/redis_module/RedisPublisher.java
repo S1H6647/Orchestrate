@@ -2,11 +2,11 @@ package com.project.orchestrate.modules.redis_module;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.orchestrate.common.config.RedisKeys;
-import com.project.orchestrate.modules.task_module.model.enums.TaskStatus;
+import com.project.orchestrate.modules.notification_module.dto.TaskCreatedEvent;
+import com.project.orchestrate.modules.notification_module.dto.TaskMoveEvent;
+import com.project.orchestrate.modules.redis_module.config.RedisKeys;
 import com.project.orchestrate.modules.task_module.dto.TaskResponse;
-import com.project.orchestrate.modules.websocket_module.dto.TaskCreatedEvent;
-import com.project.orchestrate.modules.websocket_module.dto.TaskMoveEvent;
+import com.project.orchestrate.modules.task_module.model.enums.TaskStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -49,7 +49,7 @@ public class RedisPublisher {
             String channel = RedisKeys.projectTasksChannel(projectId);
 
             redisTemplate.convertAndSend(channel, json);
-            
+
         } catch (JsonProcessingException e) {
             // Don't let serialization failure kill the edit — content is already saved
             log.error("Failed to publish task move event to Redis for task {}", taskId, e);

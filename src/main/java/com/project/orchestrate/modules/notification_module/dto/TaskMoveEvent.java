@@ -1,4 +1,4 @@
-package com.project.orchestrate.modules.websocket_module.dto;
+package com.project.orchestrate.modules.notification_module.dto;
 
 import com.project.orchestrate.modules.task_module.model.enums.TaskStatus;
 import lombok.Builder;
