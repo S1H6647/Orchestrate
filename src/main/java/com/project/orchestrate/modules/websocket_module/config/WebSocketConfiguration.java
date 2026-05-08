@@ -1,4 +1,4 @@
-package com.project.orchestrate.common.config;
+package com.project.orchestrate.modules.websocket_module.config;
 
 import com.project.orchestrate.modules.websocket_module.interceptor.WebSocketAuthInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +32,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .addInterceptors(webSocketAuthInterceptor)
+                .setHandshakeHandler(new UserHandshakeHandler())
                 .setAllowedOriginPatterns("*");
     }
 

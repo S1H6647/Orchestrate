@@ -4,6 +4,7 @@ import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
 import com.project.orchestrate.modules.auth_module.service.JwtService;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.repository.UserRepository;
+import com.project.orchestrate.modules.websocket_module.service.PresenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final PresenceService presenceService;
 
     @Override
     public boolean beforeHandshake(
@@ -77,6 +79,8 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
             attributes.put("userId", user.getId());
             attributes.put("email", user.getEmail());
+
+            presenceService.markOnline(user.getId());
 
             log.debug("Websocket handshake accepted for user: {} (id:{})", email, user.getId());
             return true;
