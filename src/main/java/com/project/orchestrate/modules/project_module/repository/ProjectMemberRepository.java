@@ -18,11 +18,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     List<ProjectMember> findAllByProjectId(UUID projectId);
 
-    // All projects a user is member of
-    List<ProjectMember> findAllByUserId(UUID userId);
-
-    // Count members — for plan limit checks
-    long countByProjectId(UUID projectId);
+    @Query("SELECT pm FROM ProjectMember pm JOIN FETCH pm.user WHERE pm.project.id = :projectId")
+    List<ProjectMember> findAllByProjectIdWithUser(UUID projectId);
 
     @Modifying
     @Query("delete from ProjectMember pm where pm.project.id = :projectId and pm.user.id = :userId")
