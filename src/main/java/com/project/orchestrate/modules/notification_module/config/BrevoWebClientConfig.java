@@ -1,4 +1,4 @@
-package com.project.orchestrate.common.config;
+package com.project.orchestrate.modules.notification_module.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

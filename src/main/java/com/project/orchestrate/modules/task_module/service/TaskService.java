@@ -2,6 +2,9 @@ package com.project.orchestrate.modules.task_module.service;
 
 import com.project.orchestrate.common.exception.AccessDeniedException;
 import com.project.orchestrate.common.exception.ResourceNotFoundException;
+import com.project.orchestrate.modules.notification_module.dto.GenericTaskEvent;
+import com.project.orchestrate.modules.notification_module.model.enums.TaskType;
+import com.project.orchestrate.modules.notification_module.publisher.TaskEventPublisher;
 import com.project.orchestrate.modules.organization_module.model.Organization;
 import com.project.orchestrate.modules.organization_module.model.OrganizationMember;
 import com.project.orchestrate.modules.organization_module.model.enums.OrganizationRole;
@@ -49,6 +52,7 @@ public class TaskService {
     private final LabelRepository labelRepository;
     private final UserRepository userRepository;
     private final RedisPublisher redisPublisher;
+    private final TaskEventPublisher taskEventPublisher;
 
     @Transactional
     public TaskResponse createTask(
@@ -113,6 +117,22 @@ public class TaskService {
         taskRepository.save(task);
 
         log.info("Task created: {} in Project: {}", task.getIdentifier(), project.getSlug());
+
+        taskEventPublisher.publishTaskEvent(
+                new GenericTaskEvent(
+                        TaskType.TASK_CREATED,
+                        task.getId(),
+                        project.getId(),
+                        null,
+                        null,
+                        null,
+                        currentUser.getId(),
+                        currentUser.getName(),
+                        task.getTitle(),
+                        String.format("Task: %s was created by %s", task.getTitle(), currentUser.getName()),
+                        task.getCreatedAt()
+                )
+        );
 
         redisPublisher.publishTaskCreatedEvent(
                 currentUser.getId(),
@@ -229,6 +249,23 @@ public class TaskService {
         }
 
         taskRepository.save(task);
+
+        taskEventPublisher.publishTaskEvent(
+                new GenericTaskEvent(
+                        TaskType.TASK_UPDATED,
+                        task.getId(),
+                        project.getId(),
+                        null,
+                        null,
+                        null,
+                        user.getId(),
+                        user.getName(),
+                        task.getTitle(),
+                        String.format("%s updated task '%s'", user.getName(), task.getTitle()),
+                        LocalDateTime.now()
+                )
+        );
+
         return TaskResponse.from(task);
     }
 
@@ -255,6 +292,22 @@ public class TaskService {
 
         log.info("Task reordered: {} status {} -> {} position {}", saved.getId(), previousStatus, saved.getStatus(), saved.getPosition());
 
+        taskEventPublisher.publishTaskEvent(
+                new GenericTaskEvent(
+                        TaskType.TASK_MOVED,
+                        saved.getId(),
+                        project.getId(),
+                        previousStatus,
+                        saved.getStatus(),
+                        saved.getPosition(),
+                        user.getId(),
+                        user.getName(),
+                        task.getTitle(),
+                        String.format("%s moved task '%s' to %s", user.getName(), saved.getTitle(), saved.getStatus()),
+                        LocalDateTime.now()
+                )
+        );
+
         redisPublisher.publishTaskMoveEvent(
                 user.getId(),
                 user.getName(),
@@ -274,6 +327,22 @@ public class TaskService {
         assertCanAccess(user, project);
 
         Task task = getTaskOrThrow(taskId, project.getId());
+
+        taskEventPublisher.publishTaskEvent(
+                new GenericTaskEvent(
+                        TaskType.TASK_DELETED,
+                        taskId,
+                        project.getId(),
+                        null,
+                        null,
+                        null,
+                        user.getId(),
+                        user.getName(),
+                        task.getTitle(),
+                        String.format("%s deleted task '%s'", user.getName(), task.getTitle()),
+                        LocalDateTime.now()
+                )
+        );
 
         taskRepository.delete(task);
     }
@@ -306,6 +375,22 @@ public class TaskService {
         }
 
         taskRepository.save(task);
+
+        taskEventPublisher.publishTaskEvent(
+                new GenericTaskEvent(
+                        TaskType.LABEL_ADDED,
+                        task.getId(),
+                        project.getId(),
+                        null,
+                        null,
+                        null,
+                        user.getId(),
+                        user.getName(),
+                        task.getTitle(),
+                        String.format("%s added label '%s' to '%s'", user.getName(), labelName, task.getTitle()),
+                        LocalDateTime.now()
+                )
+        );
     }
 
     @Transactional
@@ -316,12 +401,31 @@ public class TaskService {
 
         Task task = getTaskOrThrow(taskId, project.getId());
 
-        boolean removed = task.getLabels().removeIf(label -> label.getId().equals(labelId));
+        Label label = labelRepository.findById(labelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+
+        boolean removed = task.getLabels().removeIf(l -> l.getId().equals(labelId));
         if (!removed) {
             throw new ResourceNotFoundException("Label not found on task");
         }
 
         taskRepository.save(task);
+
+        taskEventPublisher.publishTaskEvent(
+                new GenericTaskEvent(
+                        TaskType.LABEL_REMOVED,
+                        task.getId(),
+                        project.getId(),
+                        null,
+                        null,
+                        null,
+                        user.getId(),
+                        user.getName(),
+                        task.getTitle(),
+                        String.format("%s removed label '%s' from '%s'", user.getName(), label.getName(), task.getTitle()),
+                        LocalDateTime.now()
+                )
+        );
     }
 
     // ── Helpers ────────────────────────────────────────────

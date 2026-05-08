@@ -227,6 +227,35 @@ public class EmailService {
     }
 
     // ── Email Templates ────────────────────────────────────
+    @Async
+    public void sendTaskNotificationEmail(
+            String toEmail,
+            String recipientName,
+            String actorName,
+            String projectName,
+            String taskTitle,
+            String actionLabel,
+            String detailLine,
+            String taskUrl
+    ) {
+        String html = buildTaskNotificationEmailBody(
+                recipientName,
+                actorName,
+                projectName,
+                taskTitle,
+                actionLabel,
+                detailLine,
+                taskUrl
+        );
+
+        sendEmailWithLogging(
+                toEmail,
+                recipientName,
+                actionLabel + " — Orchestrate",
+                html
+        );
+    }
+
     private String buildVerificationEmailBody(String name, String link, String resendLink) {
         return """
                 <html>
@@ -365,6 +394,55 @@ public class EmailService {
                   </body>
                 </html>
                 """.formatted(recipient, organizationName, organizationSlug, formerOwner, safeText(previousOwnerEmail));
+    }
+
+    private String buildTaskNotificationEmailBody(
+            String recipientName,
+            String actorName,
+            String projectName,
+            String taskTitle,
+            String actionLabel,
+            String detailLine,
+            String taskUrl
+    ) {
+        String recipient = (recipientName == null || recipientName.isBlank()) ? "there" : recipientName;
+        String actor = (actorName == null || actorName.isBlank()) ? "Someone" : actorName;
+        String project = (projectName == null || projectName.isBlank()) ? "your project" : projectName;
+        String title = (taskTitle == null || taskTitle.isBlank()) ? "a task" : taskTitle;
+        String detail = (detailLine == null || detailLine.isBlank()) ? "" : detailLine;
+        String link = (taskUrl == null || taskUrl.isBlank()) ? baseUrl : taskUrl;
+
+        return """
+                <html>
+                  <body style="font-family: Arial, sans-serif; max-width: 640px; margin: auto;">
+                    <h2>Hi %s</h2>
+                    <p><strong>%s</strong> %s in <strong>%s</strong>.</p>
+                    <div style="margin:16px 0; padding:12px 16px; border:1px solid #E2E8F0; border-radius:8px;">
+                      <p style="margin:0 0 6px 0; font-size:12px; color:#64748B;">Task</p>
+                      <p style="margin:0; font-size:15px; font-weight:600;">%s</p>
+                    </div>
+                    %s
+                    <a href="%s"
+                       style="display:inline-block; padding:12px 24px; background:#0F172A;
+                              color:white; border-radius:6px; text-decoration:none;
+                              font-weight:bold; margin-top:12px;">
+                      Open in Orchestrate
+                    </a>
+                    <p style="margin-top:20px; color:#94A3B8; font-size:12px;">
+                      You are receiving this because you are a member of %s.
+                    </p>
+                  </body>
+                </html>
+                """.formatted(
+                recipient,
+                actor,
+                actionLabel,
+                project,
+                title,
+                detail.isBlank() ? "" : "<p style=\"color:#334155; font-size:13px; margin:0 0 12px 0;\">" + detail + "</p>",
+                link,
+                project
+        );
     }
 
     private String safeText(String value) {
