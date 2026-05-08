@@ -1,10 +1,10 @@
 package com.project.orchestrate.modules.project_module.dto;
 
-import com.project.orchestrate.common.service.UserSummary;
 import com.project.orchestrate.modules.project_module.model.Project;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectStatus;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectType;
 import com.project.orchestrate.modules.project_module.model.enums.ProjectVisibility;
+import com.project.orchestrate.modules.user_module.dto.UserSummary;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
