@@ -3,9 +3,9 @@ package com.project.orchestrate.modules.auth_module.service;
 import com.project.orchestrate.common.exception.*;
 import com.project.orchestrate.modules.auth_module.dto.*;
 import com.project.orchestrate.modules.auth_module.mapper.UserMapper;
-import com.project.orchestrate.modules.auth_module.messaging.AccountVerificationEvent;
-import com.project.orchestrate.modules.auth_module.messaging.AccountVerificationEventPublisher;
 import com.project.orchestrate.modules.auth_module.security.user.UserPrincipal;
+import com.project.orchestrate.modules.notification_module.dto.AccountVerificationEvent;
+import com.project.orchestrate.modules.notification_module.publisher.AccountVerificationEventPublisher;
 import com.project.orchestrate.modules.user_module.model.User;
 import com.project.orchestrate.modules.user_module.model.enums.AccountStatus;
 import com.project.orchestrate.modules.user_module.model.enums.AuthProvider;
@@ -84,6 +84,13 @@ public class AuthService {
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = refreshTokenService.createAndStore(user);
+
+        publisher.publishAccountVerificationEvent(new AccountVerificationEvent(
+                user.getEmail(),
+                user.getName(),
+                user.getVerificationToken(),
+                String.valueOf(user.isEmailVerified())
+        ));
 
         return userMapper.mapLoginResponse(user, accessToken, refreshToken);
     }

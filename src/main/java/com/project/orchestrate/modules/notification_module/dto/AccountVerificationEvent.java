@@ -1,4 +1,4 @@
-package com.project.orchestrate.modules.auth_module.messaging;
+package com.project.orchestrate.modules.notification_module.dto;
 
 public record AccountVerificationEvent(
         String toEmail,

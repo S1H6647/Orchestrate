@@ -1,5 +1,6 @@
-package com.project.orchestrate.modules.auth_module.messaging;
+package com.project.orchestrate.modules.notification_module.publisher;
 
+import com.project.orchestrate.modules.notification_module.dto.AccountVerificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
